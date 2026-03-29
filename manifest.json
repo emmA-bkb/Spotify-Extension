@@ -33,5 +33,10 @@
       "resources": ["src/*"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "spoti-extension@firefox.example.com"
+    }
+  }
 }
