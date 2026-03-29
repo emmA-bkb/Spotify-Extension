@@ -1,4 +1,4 @@
-const BACKEND_URL = 'https://spotify-extencao.onrender.com';
+// BACKEND_URL é carregado de config.js
 let nowPlayingInterval = null;
 
 // Auto-add Settings (sincronizados com background)

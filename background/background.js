@@ -1,6 +1,5 @@
 // Background Script - Roda sempre em segundo plano
-
-const BACKEND_URL = 'https://spotify-extencao.onrender.com';
+// BACKEND_URL é carregado de config.js
 
 console.log('🎵 Spoti Background Script carregado!');
 

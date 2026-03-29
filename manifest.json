@@ -12,10 +12,11 @@
     "http://127.0.0.1:5000/*",
     "http://localhost:5000/*",
     "https://accounts.spotify.com/*",
-    "https://api.spotify.com/*"
+    "https://api.spotify.com/*",
+    "https://spotify-extencao.onrender.com/*"
   ],
   "background": {
-    "scripts": ["background/background.js"]
+    "scripts": ["src/config.js", "background/background.js"]
   },
   "action": {
     "default_popup": "popup/popup.html",
