@@ -1,31 +1,31 @@
-# 🎵 Spoti - Extensão Firefox para Spotify
+# Spoti - Extensão Firefox para Spotify
 
 Adicione automaticamente suas músicas favoritas a uma playlist quando você ouve um percentual configurável delas (padrão 70%).
 
-## ✨ Features
+## Features
 
-- ✅ **Auto-Add Automático** - Adiciona música quando você ouve 70% dela (configurável)
-- ✅ **Detecção de Pulos** - Não adiciona se você pular a música
-- ✅ **Sem Duplicatas** - Mesma música nunca é adicionada duas vezes
-- ✅ **Funciona em Background** - Continua funcionando mesmo com a extensão fechada
-- ✅ **Notificações** - Aviso visual quando uma música é adicionada
-- ✅ **Múltiplas Playlists** - Escolha qualquer playlist da sua conta
-- ✅ **Configurável** - Ajuste o percentual de reprodução (10-100%)
-- ✅ **Seguro** - OAuth 2.0 Spotify, seus dados não são compartilhados
+- Auto-Add Automático - Adiciona música quando você ouve 70% dela (configurável)
+- Detecção de Pulos - Não adiciona se você pular a música
+- Sem Duplicatas - Mesma música nunca é adicionada duas vezes
+- Funciona em Background - Continua funcionando mesmo com a extensão fechada
+- Notificações - Aviso visual quando uma música é adicionada
+- Múltiplas Playlists - Escolha qualquer playlist da sua conta
+- Configurável - Ajuste o percentual de reprodução (10-100%)
+- Seguro - OAuth 2.0 Spotify, seus dados não são compartilhados
 
-## 🚀 Como Instalar
+## Como Instalar
 
 ### Opção 1: Firefox Add-ons (Em Breve)
-[Disponível em em breve na Mozilla Store]
+[Disponível em breve na Mozilla Store]
 
 ### Opção 2: Instalação Manual
 1. Download do arquivo `spoti.xpi`
 2. Abra Firefox e vá em `about:addons`
-3. Clique no ⚙️ e selecione "Install Add-on From File"
+3. Clique no ícone de configurações e selecione "Install Add-on From File"
 4. Escolha `spoti.xpi`
-5. Pronto! 🎉
+5. Pronto!
 
-## 📋 Como Usar
+## Como Usar
 
 1. **Conectar ao Spotify**
    - Clique em "Conectar ao Spotify"
@@ -33,11 +33,11 @@ Adicione automaticamente suas músicas favoritas a uma playlist quando você ouv
    - Você será redirecionado automaticamente
 
 2. **Escolher Playlist**
-   - Clique em "🎵 Escolher Playlist"
+   - Clique em "Escolher Playlist"
    - Selecione a playlist onde quer adicionar músicas
 
 3. **Configurar Percentual (Opcional)**
-   - Clique em "⚙️ Configurações"
+   - Clique em "Configurações"
    - Ajuste o percentual (padrão: 70%)
    - Veja a playlist selecionada
 
@@ -45,7 +45,7 @@ Adicione automaticamente suas músicas favoritas a uma playlist quando você ouv
    - A extensão automaticamente adiciona quando você atinge o percentual
    - Recebe notificação quando cada música é adicionada
 
-## 🔧 Para Desenvolvedores / Desenvolvimento Local
+## Para Desenvolvedores / Desenvolvimento Local
 
 ### Instalação
 
@@ -105,36 +105,36 @@ SPOTIFY_API_URL=https://api.spotify.com/v1
 SPOTIFY_REDIRECT_URI=http://127.0.0.1:5000/auth/spotify/callback
 ```
 
-## 🌐 Publicar a Extensão
+## Publicar a Extensão
 
 Veja [QUICK-START.md](QUICK-START.md) para instruções rápidas de publicação.
 
-## 🔐 Privacidade & Segurança
+## Privacidade & Segurança
 
-- ✅ Nenhum dado pessoal é coletado
-- ✅ Comunicação criptografada com Spotify
-- ✅ Backend não armazena seus tokens
-- ✅ Código Open Source
-- ✅ Sem anúncios ou tracking
+- Nenhum dado pessoal é coletado
+- Comunicação criptografada com Spotify
+- Backend não armazena seus tokens
+- Código Open Source
+- Sem anúncios ou tracking
 
-## 📝 Permissões
+## Permissões
 
 - `storage` - Armazenar suas preferências localmente
 - `tabs` - Redirect do OAuth
 - `notifications` - Notificar quando adiciona música
 - `host_permissions` - Comunicar com Spotify API e backend
 
-## 🐛 Reportar Bugs
+## Reportar Bugs
 
 Encontrou um problema? Abra uma issue!
 
-## 📄 Licença
+## Licença
 
 MIT License
 
-## 🙏 Créditos
+## Créditos
 
-Desenvolvido com ❤️ para fãs de Spotify
+Desenvolvido com dedicação para fãs de Spotify
 
 ---
 
@@ -152,7 +152,7 @@ Desenvolvido com ❤️ para fãs de Spotify
             └── auth.py
 ```
 
-## 🔐 Fluxo de Autenticação
+##  Fluxo de Autenticação
 
 1. **Extensão** → Clica em "Conectar ao Spotify"
 2. **Backend** → Retorna URL de autenticação do Spotify
@@ -161,7 +161,7 @@ Desenvolvido com ❤️ para fãs de Spotify
 5. **Backend** → Troca código por token de acesso
 6. **Extensão** → Exibe informações do usuário
 
-## 🔑 Credenciais Spotify
+##  Credenciais Spotify
 
 As credenciais já estão configuradas em `backend/.env`:
 
@@ -170,9 +170,9 @@ SPOTIFY_CLIENT_ID=001db0a7a817434f9b38c8505da2a5f4
 SPOTIFY_CLIENT_SECRET=fe00f8b4ee264c8485e1c77cbc846fdf
 ```
 
-⚠️ **IMPORTANTE**: Essas são credenciais de exemplo. Para produção, use suas próprias credenciais do Spotify Developer Dashboard.
+ **IMPORTANTE**: Essas são credenciais de exemplo. Para produção, use suas próprias credenciais do Spotify Developer Dashboard.
 
-## 📦 Dependências
+##  Dependências
 
 ### Backend (Python)
 - Flask 2.3.2
@@ -183,7 +183,7 @@ SPOTIFY_CLIENT_SECRET=fe00f8b4ee264c8485e1c77cbc846fdf
 ### Frontend (JavaScript)
 - Nenhuma dependência externa (usa APIs nativas do Firefox)
 
-## 🛠️ Desenvolvimento
+##  Desenvolvimento
 
 ### Modificar a interface
 - Edite `popup/popup.html` para estrutura
@@ -197,7 +197,7 @@ SPOTIFY_CLIENT_SECRET=fe00f8b4ee264c8485e1c77cbc846fdf
 1. Vá para `about:debugging`
 2. Clique no ícone de reload próximo à extensão
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### "Erro ao conectar ao Spotify"
 - Verifique se o backend está rodando: `python main.py`
@@ -212,7 +212,7 @@ SPOTIFY_CLIENT_SECRET=fe00f8b4ee264c8485e1c77cbc846fdf
 - Procure por erros na aba "Console"
 - Verifique as logs do backend
 
-## 📝 Próximos Passos
+##  Próximos Passos
 
 - [ ] Adicionar ícones da extensão (icons/)
 - [ ] Implementar funcionalidades do Spotify (player control, playlists, etc)
