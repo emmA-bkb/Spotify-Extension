@@ -102,7 +102,7 @@ python -c "import secrets; print(secrets.token_hex(32))"
    ```
    SPOTIFY_CLIENT_ID=seu_id
    SPOTIFY_CLIENT_SECRET=seu_secret
-   SPOTIFY_REDIRECT_URI=https://seu-backend.onrender.com/auth/spotify/callback
+   SPOTIFY_REDIRECT_URI=
    SECRET_KEY=sua_chave_segura
    FLASK_DEBUG=False
    ```
@@ -234,7 +234,7 @@ Licença: MIT
             └── auth.py
 ```
 
-## 🔐 Fluxo de Autenticação
+##  Fluxo de Autenticação
 
 1. **Extensão** → Clica em "Conectar ao Spotify"
 2. **Backend** → Retorna URL de autenticação do Spotify
@@ -243,16 +243,10 @@ Licença: MIT
 5. **Backend** → Troca código por token de acesso
 6. **Extensão** → Exibe informações do usuário
 
-## 🔑 Credenciais Spotify
 
-As credenciais já estão configuradas em `backend/.env`:
 
-```
-SPOTIFY_CLIENT_ID=001db0a7a817434f9b38c8505da2a5f4
-SPOTIFY_CLIENT_SECRET=fe00f8b4ee264c8485e1c77cbc846fdf
-```
 
-⚠️ **IMPORTANTE**: Essas são credenciais de exemplo. Para produção, use suas próprias credenciais do Spotify Developer Dashboard.
+ **IMPORTANTE**: Essas são credenciais de exemplo. Para produção, use suas próprias credenciais do Spotify Developer Dashboard.
 
 ## 📦 Dependências
 
