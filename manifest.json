@@ -1,28 +1,36 @@
 {
   "manifest_version": 3,
   "name": "Spoti Extension",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Controle seu Spotify com facilidade",
+
   "icons": {
     "48": "icons/icon-48.png",
     "96": "icons/icon-96.png"
   },
+
   "permissions": [
     "storage",
-    "tabs",
     "notifications"
   ],
+
   "host_permissions": [
-    "http://127.0.0.1:5000/*",
-    "http://localhost:5000/*",
     "https://accounts.spotify.com/*",
     "https://api.spotify.com/*",
-    "https://spotify-extencao.onrender.com/*",
-    "https://i.scdn.co/*"
+    "https://spotify-extencao.onrender.com/*"
   ],
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content.js"]
+    }
+  ],
+
   "background": {
     "scripts": ["src/config.js", "background/background.js"]
   },
+
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "Spoti Extension",
@@ -31,18 +39,7 @@
       "96": "icons/icon-96.png"
     }
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content/content.js"]
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["src/*", "icons/*"],
-      "matches": ["<all_urls>"]
-    }
-  ],
+
   "browser_specific_settings": {
     "gecko": {
       "id": "spoti-extension@emanoelboelter3.addon",

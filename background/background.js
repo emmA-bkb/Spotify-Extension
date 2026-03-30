@@ -1,27 +1,18 @@
-// Background Script - Roda sempre em segundo plano
-// BACKEND_URL é carregado de config.js
-
 console.log('Spoti Background Script carregado');
 
-// Estado de rastreamento
 let trackMonitoringInterval = null;
-let isAddingTrack = false; // Lock para evitar adições simultâneas
-let lastAddedTime = 0; // Timestamp da última adição
+let isAddingTrack = false;
+let lastAddedTime = 0;
 
-// Sincronizar estado a cada 5 minutos
 setInterval(syncSpotifyState, 5 * 60 * 1000);
-
-// Sincronizar também quando a extensão é inicializada
 syncSpotifyState();
 
-// Verificar se auto-add está habilitado ao carregar
 chrome.storage.local.get(['selected_playlist'], (storage) => {
     if (storage.selected_playlist) {
         startTrackMonitoring();
     }
 });
 
-// Ouvir mudanças no storage (para saber se playlist foi selecionada)
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.selected_playlist) {
         if (changes.selected_playlist.newValue) {
@@ -34,22 +25,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-/**
- * Inicia o monitoramento de tracks
- */
 function startTrackMonitoring() {
-    if (trackMonitoringInterval) return; // Já está rodando
-    
+    if (trackMonitoringInterval) return;
     console.log('Iniciando monitoramento de tracks em background');
-    
-    trackMonitoringInterval = setInterval(trackCurrentSong, 3000); // Aumentado para 3 segundos
-    // Executar imediatamente
+    trackMonitoringInterval = setInterval(trackCurrentSong, 3000);
     trackCurrentSong();
 }
 
-/**
- * Para o monitoramento de tracks
- */
 function stopTrackMonitoring() {
     if (trackMonitoringInterval) {
         clearInterval(trackMonitoringInterval);
@@ -58,9 +40,6 @@ function stopTrackMonitoring() {
     }
 }
 
-/**
- * Rastreia a música atualmente tocando
- */
 async function trackCurrentSong() {
     try {
         const storage = await new Promise((resolve) => {
@@ -81,12 +60,10 @@ async function trackCurrentSong() {
         const currentTracking = storage.current_track_monitoring || {};
         const addedTracks = storage.added_tracks || {};
         
-        // Verificar se está autenticado e tem playlist selecionada
         if (!token || authState !== 'logged_in' || !selectedPlaylist) {
             return;
         }
         
-        // Buscar track atual
         const response = await fetch(`${BACKEND_URL}/auth/spotify/current_track`, {
             method: 'POST',
             mode: 'cors',
@@ -102,7 +79,6 @@ async function trackCurrentSong() {
         const data = await response.json();
         
         if (!data.is_playing || !data.item) {
-            // Música não está tocando, resetar tracking
             chrome.storage.local.set({ current_track_monitoring: { trackId: null } });
             return;
         }
@@ -113,7 +89,6 @@ async function trackCurrentSong() {
         const duration = item.duration_ms;
         const progressPercentage = (progress / duration) * 100;
         
-        // Se é uma música diferente, resetar rastreamento
         if (currentTracking.trackId !== trackId) {
             console.log(`Nova música: ${item.name}`);
             
@@ -126,10 +101,8 @@ async function trackCurrentSong() {
                 }
             });
         } else {
-            // Mesmo track, atualizar progresso máximo (para detectar pulo)
             const maxProgress = Math.max(currentTracking.maxProgress || 0, progressPercentage);
             
-            // Se pulou para trás de forma significativa (mais de 20%), reseta máximo
             if (progressPercentage < (currentTracking.maxProgress - 20)) {
                 console.log('Track pulada detectada');
                 chrome.storage.local.set({
@@ -138,10 +111,9 @@ async function trackCurrentSong() {
                         maxProgress: progressPercentage
                     }
                 });
-                return; // Não adiciona
+                return;
             }
             
-            // Atualizar máximo progresso
             if (maxProgress > currentTracking.maxProgress) {
                 chrome.storage.local.set({
                     current_track_monitoring: {
@@ -151,11 +123,8 @@ async function trackCurrentSong() {
                 });
             }
             
-            // Se atingiu o threshold e ainda não foi adicionada
             if (progressPercentage >= thresholdPercentage && !addedTracks[trackId]) {
                 console.log(`Track atingiu ${thresholdPercentage}%! Adicionando à playlist...`);
-                // Marcar como adicionada IMEDIATAMENTE (antes da chamada ao servidor)
-                // Isto evita múltiplas requisições da mesma música
                 addedTracks[trackId] = true;
                 chrome.storage.local.set({ added_tracks: addedTracks });
                 addTrackToPlaylistBackground(trackId, item, selectedPlaylist, token, addedTracks);
@@ -166,22 +135,11 @@ async function trackCurrentSong() {
     }
 }
 
-/**
- * Adiciona track à playlist em background
- */
 async function addTrackToPlaylistBackground(trackId, item, playlist, token, addedTracks) {
-    // Proteção contra múltiplas adições simultâneas
-    if (isAddingTrack) {
-        console.log('Já estou adicionando uma track. Ignorando...');
-        return;
-    }
+    if (isAddingTrack) return;
     
-    // Proteção contra adições muito rápidas (menos de 1 segundo)
     const timeSinceLastAdd = Date.now() - lastAddedTime;
-    if (timeSinceLastAdd < 1000) {
-        console.log(`Última adição foi há ${timeSinceLastAdd}ms. Aguardando...`);
-        return;
-    }
+    if (timeSinceLastAdd < 1000) return;
     
     isAddingTrack = true;
     
@@ -202,10 +160,8 @@ async function addTrackToPlaylistBackground(trackId, item, playlist, token, adde
         
         if (response.ok) {
             lastAddedTime = Date.now();
-            
             console.log(`"${item.name}" adicionada à playlist "${playlist.name}"`);
             
-            // Notificar o usuário com notificação
             chrome.notifications.create(`track-added-${trackId}`, {
                 type: 'basic',
                 iconUrl: item.cover || 'icons/icon-128.png',
@@ -222,9 +178,6 @@ async function addTrackToPlaylistBackground(trackId, item, playlist, token, adde
     }
 }
 
-/**
- * Sincroniza o estado do Spotify em background
- */
 async function syncSpotifyState() {
     try {
         const storage = await new Promise((resolve) => {
@@ -234,10 +187,7 @@ async function syncSpotifyState() {
         const token = storage.spotify_access_token;
         const authState = storage.spotify_auth_state;
         
-        console.log('Background sync - Auth state:', authState, 'Token:', token ? 'exists' : 'not found');
-        
         if (token && authState === 'logged_in') {
-            // Validar token com backend
             const response = await fetch(`${BACKEND_URL}/auth/spotify/user`, {
                 method: 'POST',
                 mode: 'cors',
@@ -255,7 +205,6 @@ async function syncSpotifyState() {
             } else {
                 console.log('Token válido - estado sincronizado');
                 
-                // Se tem playlist selecionada, iniciar monitoramento
                 const checkPlaylist = await new Promise((resolve) => {
                     chrome.storage.local.get(['selected_playlist'], resolve);
                 });
@@ -272,7 +221,6 @@ async function syncSpotifyState() {
     }
 }
 
-// Listener para mensagens de outras partes da extensão
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Mensagem recebida no background:', request.type);
     

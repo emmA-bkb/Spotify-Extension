@@ -1,11 +1,7 @@
-// BACKEND_URL é carregado de config.js
 let nowPlayingInterval = null;
-
-// Auto-add Settings (sincronizados com background)
 let selectedPlaylist = null;
 let thresholdPercentage = 70;
 
-// Elementos do DOM
 const authSection = document.getElementById('auth-section');
 const userSection = document.getElementById('user-section');
 const userContent = document.getElementById('user-content');
@@ -19,7 +15,6 @@ const selectedPlaylistCover = document.getElementById('selected-playlist-cover')
 const selectedPlaylistName = document.getElementById('selected-playlist-name');
 const selectedPlaylistTrackCount = document.getElementById('selected-playlist-track-count');
 
-// Modal elements
 const playlistModal = document.getElementById('playlist-modal');
 const createPlaylistBtn = document.getElementById('create-playlist-btn');
 const modalClose = document.getElementById('modal-close');
@@ -27,14 +22,12 @@ const modalCancel = document.getElementById('modal-cancel');
 const modalCreate = document.getElementById('modal-create');
 const playlistNameInput = document.getElementById('playlist-name');
 
-// Choose Playlist Modal
 const choosePlaylistModal = document.getElementById('choose-playlist-modal');
 const choosePlaylistBtn = document.getElementById('choose-playlist-btn');
 const choosePlaylistClose = document.getElementById('choose-playlist-close');
 const choosePlaylistCancel = document.getElementById('choose-playlist-cancel');
 const playlistsList = document.getElementById('playlists-list');
 
-// Settings Modal
 const settingsModal = document.getElementById('settings-modal');
 const settingsBtn = document.getElementById('settings-btn');
 const settingsClose = document.getElementById('settings-close');
@@ -43,7 +36,6 @@ const thresholdInput = document.getElementById('threshold-input');
 const thresholdDisplay = document.getElementById('threshold-display');
 const selectedPlaylistInfo = document.getElementById('selected-playlist-info');
 
-// Event listeners
 spotifyLoginBtn.addEventListener('click', initiateSpotifyLogin);
 logoutBtn.addEventListener('click', handleLogout);
 createPlaylistBtn.addEventListener('click', openPlaylistModal);
@@ -51,44 +43,34 @@ modalClose.addEventListener('click', closePlaylistModal);
 modalCancel.addEventListener('click', closePlaylistModal);
 modalCreate.addEventListener('click', createPlaylist);
 
-// Choose Playlist Modal
 choosePlaylistBtn.addEventListener('click', openChoosePlaylistModal);
 choosePlaylistClose.addEventListener('click', closeChoosePlaylistModal);
 choosePlaylistCancel.addEventListener('click', closeChoosePlaylistModal);
 
-// Settings Modal
 settingsBtn.addEventListener('click', openSettingsModal);
 settingsClose.addEventListener('click', closeSettingsModal);
 settingsCloseBtn.addEventListener('click', closeSettingsModal);
 thresholdInput.addEventListener('input', updateThresholdDisplay);
 
-// Ouvir mensagens da aba de callback
-window.addEventListener('message', (event) => {
-    if (event.data.type === 'SPOTIFY_AUTH_SUCCESS') {
-        const { access_token, refresh_token } = event.data.data;
-        // Salvar tokens
-        chrome.storage.local.set({
-            spotify_access_token: access_token,
-            spotify_refresh_token: refresh_token,
-            spotify_auth_state: 'logged_in'
-        });
-        // Verificar após salvar
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.type === 'AUTH_SUCCESS') {
+        const { access_token, refresh_token } = request.data;
         setTimeout(checkUserStatus, 500);
     }
 });
 
-// Inicializar
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Popup carregado');
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'local' && changes.spotify_access_token) {
+            setTimeout(checkUserStatus, 500);
+        }
+    });
+    
     checkUserStatus();
 });
 
-/**
- * Verifica se o usuário já está autenticado
- */
 async function checkUserStatus() {
     try {
-        // Tentar pegar token do storage
         const storage = await new Promise((resolve) => {
             chrome.storage.local.get(['spotify_access_token', 'spotify_user_data', 'spotify_auth_state'], resolve);
         });
@@ -97,21 +79,12 @@ async function checkUserStatus() {
         const authState = storage.spotify_auth_state;
         const userData = storage.spotify_user_data;
         
-        console.log('Auth state:', authState);
-        console.log('Token:', token ? 'Exists' : 'Not found');
-        console.log('User data:', userData ? 'Cached' : 'Not cached');
-        
-        // Se tem token e estado é 'logged_in' e temos dados cacheados
         if (token && authState === 'logged_in' && userData) {
-            console.log('Usando dados cacheados');
             showUserSection(userData);
-            // Verificar com backend em background para validar token
             validateTokenInBackground(token);
         } else if (token) {
-            console.log('Validando token com backend...');
             showLoading(true);
             
-            // Enviar token via POST
             const response = await fetch(`${BACKEND_URL}/auth/spotify/user`, {
                 method: 'POST',
                 mode: 'cors',
@@ -124,9 +97,8 @@ async function checkUserStatus() {
             
             if (response.ok) {
                 const user = await response.json();
-                console.log('User data received:', user.display_name);
+                console.log('Usuário autenticado:', user.display_name);
                 
-                // Salvar dados do usuário para cache
                 chrome.storage.local.set({
                     spotify_user_data: user,
                     spotify_auth_state: 'logged_in'
@@ -135,12 +107,10 @@ async function checkUserStatus() {
                 showUserSection(user);
             } else {
                 console.log('Token inválido ou expirado');
-                // Token inválido
                 chrome.storage.local.set({ spotify_auth_state: 'logged_out' });
                 showAuthSection();
             }
         } else {
-            console.log('Nenhum token encontrado');
             showLoading(false);
             showAuthSection();
         }
@@ -151,9 +121,6 @@ async function checkUserStatus() {
     }
 }
 
-/**
- * Valida token em background sem bloquear UI
- */
 async function validateTokenInBackground(token) {
     try {
         const response = await fetch(`${BACKEND_URL}/auth/spotify/user`, {
@@ -167,7 +134,7 @@ async function validateTokenInBackground(token) {
         });
         
         if (!response.ok) {
-            console.log('Token expirou em background');
+
             chrome.storage.local.set({ spotify_auth_state: 'logged_out' });
         }
     } catch (error) {
@@ -175,17 +142,10 @@ async function validateTokenInBackground(token) {
     }
 }
 
-/**
- * Inicia o fluxo de login do Spotify
- */
 async function initiateSpotifyLogin() {
     try {
         showLoading(true);
         
-        console.log('Iniciando login do Spotify...');
-        console.log('Backend URL:', BACKEND_URL);
-        
-        // Obter URL de autenticação do backend
         const response = await fetch(`${BACKEND_URL}/auth/spotify/login`, {
             method: 'GET',
             mode: 'cors',
@@ -195,23 +155,16 @@ async function initiateSpotifyLogin() {
             }
         });
         
-        console.log('Response status:', response.status);
-        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const data = await response.json();
-    
-    // Salvar estado
-    chrome.storage.local.set({ spotify_auth_state: 'logged_in' });
-        console.log('Auth URL received:', data.auth_url ? 'Yes' : 'No');
         
         if (data.auth_url) {
-            // Abrir URL de autenticação em nova aba
             chrome.tabs.create({ url: data.auth_url });
         } else {
-            console.error('No auth_url in response:', data);
+            console.error('Erro: URL de autenticação não recebida');
             alert('Erro ao obter URL de autenticação');
             showLoading(false);
         }
@@ -224,9 +177,6 @@ async function initiateSpotifyLogin() {
     }
 }
 
-/**
- * Exibe a seção de autenticação
- */
 function showAuthSection() {
     authSection.style.display = 'flex';
     userSection.style.display = 'none';
@@ -234,70 +184,51 @@ function showAuthSection() {
     selectedPlaylistCard.style.display = 'none';
     loadingDiv.style.display = 'none';
     
-    // Parar atualizações de música
     if (nowPlayingInterval) {
         clearInterval(nowPlayingInterval);
         nowPlayingInterval = null;
     }
     
-    // Salvar estado
     chrome.storage.local.set({ spotify_auth_state: 'logged_out' });
 }
 
-/**
- * Exibe a seção de usuário
- */
 function showUserSection(user) {
     authSection.style.display = 'none';
     userSection.style.display = 'flex';
     userContent.style.display = 'flex';
     loadingDiv.style.display = 'none';
     
-    // Atualizar informações do usuário
     document.getElementById('user-name').textContent = user.display_name || user.email;
     
-    // Exibir avatar se disponível
     if (user.images && user.images.length > 0) {
         document.getElementById('user-avatar').src = user.images[0].url;
     }
     
-    // Salvar estado
     chrome.storage.local.set({ spotify_auth_state: 'logged_in' });
     
-    // Carregar configurações de auto-add
     chrome.storage.local.get(['selected_playlist', 'threshold_percentage'], (storage) => {
         selectedPlaylist = storage.selected_playlist || null;
         thresholdPercentage = storage.threshold_percentage || 70;
         
-        // Atualizar card da playlist selecionada
         updateSelectedPlaylistCard();
     });
     
-    // Começar a atualizar música a cada 2 segundos
     if (nowPlayingInterval) clearInterval(nowPlayingInterval);
     updateCurrentTrack();
     nowPlayingInterval = setInterval(updateCurrentTrack, 2000);
 }
 
-/**
- * Exibe/oculta a seção de loading
- */
 function showLoading(show) {
     loadingDiv.style.display = show ? 'flex' : 'none';
 }
 
-/**
- * Faz logout do usuário
- */
 async function handleLogout() {
     try {
-        // Parar atualizações de música
         if (nowPlayingInterval) {
             clearInterval(nowPlayingInterval);
             nowPlayingInterval = null;
         }
         
-        // Limpar tudo do storage
         chrome.storage.local.remove([
             'spotify_access_token', 
             'spotify_refresh_token',
@@ -305,8 +236,7 @@ async function handleLogout() {
             'spotify_auth_state'
         ]);
         
-        // Chamar logout no backend (optional)
-        fetch(`${BACKEND_URL}/auth/logout`, {
+        fetch(`${BACKEND_URL}/auth/spotify/logout`, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'application/json' }
@@ -318,9 +248,6 @@ async function handleLogout() {
     }
 }
 
-/**
- * Atualiza a música atualmente tocando
- */
 async function updateCurrentTrack() {
     try {
         const storage = await new Promise((resolve) => {
@@ -346,10 +273,8 @@ async function updateCurrentTrack() {
         const data = await response.json();
         
         if (data.is_playing && data.item) {
-            // Música está tocando
             const item = data.item;
             
-            // Atualizar HTML
             document.getElementById('track-name').textContent = item.name;
             document.getElementById('track-artist').textContent = item.artists.join(', ');
             
@@ -357,15 +282,12 @@ async function updateCurrentTrack() {
                 document.getElementById('track-cover').src = item.cover;
             }
             
-            // Atualizar barra de progresso
             const progress = (item.progress_ms / item.duration_ms) * 100;
             document.getElementById('progress').style.width = progress + '%';
             
-            // Atualizar tempo
             document.getElementById('current-time').textContent = formatTime(item.progress_ms);
             document.getElementById('duration').textContent = formatTime(item.duration_ms);
             
-            // Mostrar seção de música
             nowPlayingDiv.style.display = 'block';
             notPlayingDiv.style.display = 'none';
         } else {
