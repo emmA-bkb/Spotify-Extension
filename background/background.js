@@ -5,6 +5,8 @@ console.log('🎵 Spoti Background Script carregado!');
 
 // Estado de rastreamento
 let trackMonitoringInterval = null;
+let isAddingTrack = false; // Lock para evitar adições simultâneas
+let lastAddedTime = 0; // Timestamp da última adição
 
 // Sincronizar estado a cada 5 minutos
 setInterval(syncSpotifyState, 5 * 60 * 1000);
@@ -40,7 +42,7 @@ function startTrackMonitoring() {
     
     console.log('▶️ Iniciando monitoramento de tracks em background');
     
-    trackMonitoringInterval = setInterval(trackCurrentSong, 2000);
+    trackMonitoringInterval = setInterval(trackCurrentSong, 3000); // Aumentado para 3 segundos
     // Executar imediatamente
     trackCurrentSong();
 }
@@ -152,6 +154,10 @@ async function trackCurrentSong() {
             // Se atingiu o threshold e ainda não foi adicionada
             if (progressPercentage >= thresholdPercentage && !addedTracks[trackId]) {
                 console.log(`✅ Track atingiu ${thresholdPercentage}%! Adicionando à playlist...`);
+                // Marcar como adicionada IMEDIATAMENTE (antes da chamada ao servidor)
+                // Isto evita múltiplas requisições da mesma música
+                addedTracks[trackId] = true;
+                chrome.storage.local.set({ added_tracks: addedTracks });
                 addTrackToPlaylistBackground(trackId, item, selectedPlaylist, token, addedTracks);
             }
         }
@@ -164,6 +170,21 @@ async function trackCurrentSong() {
  * Adiciona track à playlist em background
  */
 async function addTrackToPlaylistBackground(trackId, item, playlist, token, addedTracks) {
+    // Proteção contra múltiplas adições simultâneas
+    if (isAddingTrack) {
+        console.log('⏳ Já estou adicionando uma track. Ignorando...');
+        return;
+    }
+    
+    // Proteção contra adições muito rápidas (menos de 1 segundo)
+    const timeSinceLastAdd = Date.now() - lastAddedTime;
+    if (timeSinceLastAdd < 1000) {
+        console.log(`⏳ Última adição foi há ${timeSinceLastAdd}ms. Aguardando...`);
+        return;
+    }
+    
+    isAddingTrack = true;
+    
     try {
         const response = await fetch(`${BACKEND_URL}/auth/spotify/add_track_to_playlist`, {
             method: 'POST',
@@ -180,9 +201,7 @@ async function addTrackToPlaylistBackground(trackId, item, playlist, token, adde
         });
         
         if (response.ok) {
-            // Marcar como adicionada
-            addedTracks[trackId] = true;
-            chrome.storage.local.set({ added_tracks: addedTracks });
+            lastAddedTime = Date.now();
             
             console.log(`🎵 "${item.name}" adicionada à playlist "${playlist.name}"!`);
             
@@ -198,6 +217,8 @@ async function addTrackToPlaylistBackground(trackId, item, playlist, token, adde
         }
     } catch (error) {
         console.error('❌ Erro ao adicionar track em background:', error);
+    } finally {
+        isAddingTrack = false;
     }
 }
 
